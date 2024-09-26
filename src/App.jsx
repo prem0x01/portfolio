@@ -11,18 +11,18 @@ function App() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   const skills = [
-    { name: 'React', image: '/src/images/react.png' },
-    { name: 'JavaScript', image: '/src/images/js.png' },
-    { name: 'Node.js', image: '/src/images/nodejs.png' },
-    { name: 'Python', image: '/src/images/python.png' },
-    { name: 'Go', image: '/src/images/golang.png' },
-    { name: 'Java', image: '/src/images/java.png' },
-    { name: 'Git', image: '/src/images/git.png' },
-    { name: 'SQL', image: '/src/images/database.png' },
-    { name: 'C', image: '/src/images/c.png' },
-    { name: 'php', image: '/src/images/php.png' },
-    { name: 'Kubernetes', image: '/src/images/kubernetes.1024x996.png' },
-    { name: 'Docker', image: '/src/images/social.png' },
+    { name: 'React', image: '/public/images/react.png' },
+    { name: 'JavaScript', image: '/public/images/js.png' },
+    { name: 'Node.js', image: '/public/images/nodejs.png' },
+    { name: 'Python', image: '/public/images/python.png' },
+    { name: 'Go', image: '/public/images/golang.png' },
+    { name: 'Java', image: '/public/images/java.png' },
+    { name: 'Git', image: '/public/images/git.png' },
+    { name: 'SQL', image: '/public/images/database.png' },
+    { name: 'C', image: '/public/images/c.png' },
+    { name: 'php', image: '/public/images/php.png' },
+    { name: 'Kubernetes', image: '/public/images/kubernetes.1024x996.png' },
+    { name: 'Docker', image: '/public/images/social.png' },
   ];
 
   const projects = [
@@ -303,7 +303,7 @@ function AboutSection() {
   return (
     <section id="about" className="mb-20 flex flex-col md:flex-row items-center">
       <div className="md:w-1/3 mb-8 md:mb-0">
-        <img src="/src/images/me.jpeg" alt="Prem Mankar" className="rounded-full w-48 h-48 object-cover mx-auto border-4 border-purple-400" />
+        <img src="/public/images/me.jpeg" alt="Prem Mankar" className="rounded-full w-48 h-48 object-cover mx-auto border-4 border-purple-400" />
       </div>
       <div className="md:w-2/3 md:pl-8">
         <h2 className="text-3xl font-bold mb-4 text-purple-400">About Me</h2>
