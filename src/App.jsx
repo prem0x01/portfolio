@@ -106,8 +106,8 @@ function App() {
         this.radius = radius;
         this.color = isDarkTheme ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)';
         this.glowColor = isDarkTheme ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)';
-        this.speedX = (Math.random() - 0.5) * 0.05; // Reduced speed
-        this.speedY = (Math.random() - 0.5) * 0.05; // Reduced speed
+        this.speedX = (Math.random() - 0.5) * 0.35; // Reduced speed
+        this.speedY = (Math.random() - 0.5) * 0.35; // Reduced speed
         this.glowIntensity = 0;
         this.isBlinking = false;
         this.blinkProgress = 0;
@@ -342,9 +342,11 @@ Beyond coding, I'm writing my book "Pain in Her Eyes," and showcasing my art on 
       </div>
       <div className="md:w-2/3 md:pl-8">
         <h2 className="text-3xl font-bold mb-4 text-purple-400">About Me</h2>
-        <p className="text-purple-300 whitespace-pre-line">
-          {displayText}
-        </p>
+        <div className="h-64 overflow-y-auto custom-scrollbar">
+          <p className="text-purple-300 whitespace-pre-line">
+            {displayText}
+          </p>
+        </div>
       </div>
     </section>
   )
