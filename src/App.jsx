@@ -1,6 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react'
 import './App.css'
 
+function useTypewriter(text, speed = 50) {
+  const [displayText, setDisplayText] = useState('');
+
+  useEffect(() => {
+    let i = 0;
+    const typingInterval = setInterval(() => {
+      if (i < text.length) {
+        setDisplayText(prev => prev + text.charAt(i));
+        i++;
+      } else {
+        clearInterval(typingInterval);
+      }
+    }, speed);
+
+    return () => clearInterval(typingInterval);
+  }, [text, speed]);
+
+  return displayText;
+}
+
 function App() {
   const canvasRef = useRef(null);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
@@ -11,18 +31,18 @@ function App() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   const skills = [
-    { name: 'React', image: '/public/images/react.png' },
-    { name: 'JavaScript', image: '/public/images/js.png' },
-    { name: 'Node.js', image: '/public/images/nodejs.png' },
-    { name: 'Python', image: '/public/images/python.png' },
-    { name: 'Go', image: '/public/images/golang.png' },
-    { name: 'Java', image: '/public/images/java.png' },
-    { name: 'Git', image: '/public/images/git.png' },
-    { name: 'SQL', image: '/public/images/database.png' },
-    { name: 'C', image: '/public/images/c.png' },
-    { name: 'php', image: '/public/images/php.png' },
-    { name: 'Kubernetes', image: '/public/images/kubernetes.1024x996.png' },
-    { name: 'Docker', image: '/public/images/social.png' },
+    { name: 'React', image: '/src/assets/images/react.png' },
+    { name: 'JavaScript', image: '/src/assets/images/js.png' },
+    { name: 'Node.js', image: '/src/assets/images/nodejs.png' },
+    { name: 'Python', image: '/src/assets/images/python.png' },
+    { name: 'Go', image: '/src/assets/images/golang.png' },
+    { name: 'Java', image: '/src/assets/images/java.png' },
+    { name: 'Git', image: '/src/assets/images/git.png' },
+    { name: 'SQL', image: '/src/assets/images/database.png' },
+    { name: 'C', image: '/src/assets/images/c.png' },
+    { name: 'php', image: '/src/assets/images/php.png' },
+    { name: 'Kubernetes', image: '/src/assets/images/kubernetes.1024x996.png' },
+    { name: 'Docker', image: '/src/assets/images/social.png' },
   ];
 
   const projects = [
@@ -84,67 +104,66 @@ function App() {
         this.y = y;
         this.baseRadius = radius;
         this.radius = radius;
-        this.baseColor = isDarkTheme ? 'rgba(138, 43, 226, 0.5)' : 'rgba(98, 0, 234, 0.5)';
-        this.glowColor = isDarkTheme ? 'rgba(138, 43, 226, 1)' : 'rgba(98, 0, 234, 1)';
-        this.speedX = (Math.random() - 0.5) * 0.5;
-        this.speedY = (Math.random() - 0.5) * 0.5;
+        this.color = isDarkTheme ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)';
+        this.glowColor = isDarkTheme ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)';
+        this.speedX = (Math.random() - 0.5) * 0.05; // Reduced speed
+        this.speedY = (Math.random() - 0.5) * 0.05; // Reduced speed
         this.glowIntensity = 0;
+        this.isBlinking = false;
+        this.blinkProgress = 0;
       }
 
       draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        ctx.fillStyle = this.baseColor;
+        ctx.fillStyle = this.color;
         ctx.shadowColor = this.glowColor;
-        ctx.shadowBlur = 20 * this.glowIntensity;
+        ctx.shadowBlur = 15 * this.glowIntensity;
         ctx.fill();
-        
+
         // Add an extra glow effect
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * 1.5, 0, Math.PI * 2, false);
-        ctx.fillStyle = `rgba(138, 43, 226, ${0.1 * this.glowIntensity})`;
+        ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2, false);
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.2 * this.glowIntensity})`;
         ctx.fill();
-        
+
         ctx.shadowBlur = 0;
       }
 
       update() {
-        let newX = this.x + this.speedX;
-        let newY = this.y + this.speedY;
-
-        // Check if the new position is inside the safe zone
-        if (
-          newX > safeZone.x &&
-          newX < safeZone.x + safeZone.width &&
-          newY > safeZone.y &&
-          newY < safeZone.y + safeZone.height
-        ) {
-          // If inside safe zone, reverse direction
-          this.speedX = -this.speedX;
-          this.speedY = -this.speedY;
-        } else {
-          // If not in safe zone, update position
-          this.x = newX;
-          this.y = newY;
-        }
+        // Slow movement
+        this.x += this.speedX;
+        this.y += this.speedY;
 
         // Bounce off the edges of the canvas
         if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX;
         if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY;
 
-        // Calculate distance to mouse
+        // Glow effect based on mouse proximity
         const dx = this.x - mouse.x;
         const dy = this.y - mouse.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
+        const glowRadius = 150; // Increased glow radius
 
-        // Glow effect based on mouse proximity
-        const glowRadius = 150; // Increased radius of influence
         if (distance < glowRadius) {
           this.glowIntensity = 1 - distance / glowRadius;
-          this.radius = this.baseRadius + (this.baseRadius * this.glowIntensity);
+          this.radius = this.baseRadius + (this.baseRadius * 2 * this.glowIntensity); // Increased size change
         } else {
           this.glowIntensity = 0;
           this.radius = this.baseRadius;
+        }
+
+        // Blink effect
+        if (this.isBlinking) {
+          this.blinkProgress += 0.1;
+          this.glowIntensity = Math.sin(this.blinkProgress) * 0.5 + 0.5;
+          this.radius = this.baseRadius + (this.baseRadius * 3 * this.glowIntensity); // Increased size change for blinking
+          if (this.blinkProgress >= Math.PI) {
+            this.isBlinking = false;
+            this.blinkProgress = 0;
+            this.glowIntensity = 0;
+            this.radius = this.baseRadius;
+          }
         }
 
         this.draw();
@@ -153,7 +172,7 @@ function App() {
 
     function initNodes() {
       nodes.length = 0;
-      for (let i = 0; i < 150; i++) {
+      for (let i = 0; i < 200; i++) {
         let x, y;
         do {
           x = Math.random() * canvas.width;
@@ -164,9 +183,15 @@ function App() {
           y > safeZone.y &&
           y < safeZone.y + safeZone.height
         );
-        const radius = Math.random() * 2 + 1;
+        const radius = Math.random() * 1 + 0.5;
         nodes.push(new Node(x, y, radius));
       }
+    }
+
+    function blinkRandomNode() {
+      const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+      randomNode.isBlinking = true;
+      randomNode.blinkProgress = 0;
     }
 
     function animate() {
@@ -179,8 +204,12 @@ function App() {
     initNodes();
     animate();
 
+    // Set up blinking interval
+    const blinkInterval = setInterval(blinkRandomNode, 1000);
+
     // Cleanup function
     return () => {
+      clearInterval(blinkInterval);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
     };
@@ -224,7 +253,7 @@ function Header({ isDarkTheme, toggleTheme, isMenuOpen, toggleMenu }) {
     <header className="fixed top-0 left-0 w-full bg-opacity-90 backdrop-filter backdrop-blur-lg z-50 transition-colors duration-300">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <a href="#" className="text-2xl font-bold text-purple-500 hover:text-purple-400 transition-colors duration-300">
-          Prem Mankar
+          prem0x01
         </a>
         <nav className="hidden md:flex space-x-6">
           <a href="#about" className="nav-link">About</a>
@@ -300,15 +329,21 @@ function MobileMenu({ isMenuOpen, toggleMenu, toggleTheme, isDarkTheme }) {
 }
 
 function AboutSection() {
+  const aboutText = `Hey! I'm Prem Mankar—a tech enthusiast, cybersecurity aficionado, and creative artist. Pursuing a Bachelor's in Computer Science at BAMU, I specialize in building secure, innovative applications and conducting vulnerability assessments.
+
+Beyond coding, I'm writing my book "Pain in Her Eyes," and showcasing my art on Instagram. I'm now seeking an entry-level role in software development or cybersecurity to combine my passion for tech and creativity. Let's connect and build something extraordinary!`;
+
+  const displayText = useTypewriter(aboutText, 20); // Adjust speed as needed
+
   return (
     <section id="about" className="mb-20 flex flex-col md:flex-row items-center">
       <div className="md:w-1/3 mb-8 md:mb-0">
-        <img src="/public/images/me.jpeg" alt="Prem Mankar" className="rounded-full w-48 h-48 object-cover mx-auto border-4 border-purple-400" />
+        <img src="/src/assets/images/me.jpeg" alt="Prem Mankar" className="rounded-full w-48 h-48 object-cover mx-auto border-4 border-purple-400" />
       </div>
       <div className="md:w-2/3 md:pl-8">
         <h2 className="text-3xl font-bold mb-4 text-purple-400">About Me</h2>
-        <p className="text-purple-300">
-        Welcome to my portfolio! I am a passionate developer with experience in various technologies. currently pursuing a Bachelor of Computer Science from Dr. Babasaheb Ambedkar Marathwada University (BAMU). Passionate about cybersecurity and penetration testing, with hands-on experience in developing secure applications and conducting vulnerability assessments. Seeking an entry-level position in software development or cybersecurity where I can apply my technical skills, learn from experienced professionals, and contribute to innovative projects.
+        <p className="text-purple-300 whitespace-pre-line">
+          {displayText}
         </p>
       </div>
     </section>
@@ -331,7 +366,7 @@ function SkillsSection({ skills, currentSkill, showAllSkills, setShowAllSkills }
           </div>
           <div className="skill-animation-container h-8 overflow-hidden">
             <p key={currentSkill} className="text-xl text-center text-purple-300 skill-animation">
-              Current Skill: <span className="font-bold text-purple-400">{skills[currentSkill].name}</span>
+              <span className="font-bold text-purple-400">{skills[currentSkill].name}</span>
             </p>
           </div>
         </div>
@@ -359,8 +394,19 @@ function SkillsSection({ skills, currentSkill, showAllSkills, setShowAllSkills }
 }
 
 function ProjectsSection({ projects, showAllProjects, setShowAllProjects }) {
+  const [showPopup, setShowPopup] = useState(false);
+
+  const handleViewProject = (link) => {
+    if (link) {
+      window.open(link, '_blank');
+    } else {
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 3000); // Hide popup after 3 seconds
+    }
+  };
+
   return (
-    <section id="projects" className="mb-20">
+    <section id="projects" className="mb-20 relative">
       <h2 className="text-3xl font-bold mb-8 text-purple-400">My Projects</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {projects.slice(0, showAllProjects ? projects.length : 3).map((project, index) => (
@@ -369,7 +415,12 @@ function ProjectsSection({ projects, showAllProjects, setShowAllProjects }) {
             <div className="flex-grow overflow-y-auto custom-scrollbar">
               <p className="text-purple-300 mb-4">{project.description}</p>
             </div>
-            <a href="#" className="text-purple-400 hover:text-purple-300 transition-colors duration-300 mt-4">View Project</a>
+            <button 
+              onClick={() => handleViewProject(project.link)}
+              className="text-purple-400 hover:text-purple-300 transition-colors duration-300 mt-4"
+            >
+              View Project
+            </button>
           </div>
         ))}
       </div>
@@ -381,6 +432,11 @@ function ProjectsSection({ projects, showAllProjects, setShowAllProjects }) {
           >
             See All Projects
           </button>
+        </div>
+      )}
+      {showPopup && (
+        <div className="fixed bottom-4 right-4 bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
+          Project hasn't been deployed yet.
         </div>
       )}
     </section>
@@ -435,7 +491,7 @@ function Footer() {
             <i className="fab fa-instagram text-3xl"></i>
           </a>
         </div>
-        <p>&copy; 2023 Prem Mankar. All rights reserved.</p>
+        <p>&copy; 2023 prem0x01 All rights reserved.</p>
       </div>
     </footer>
   )
