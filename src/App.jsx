@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import './App.css'
+import MobileMenu from './MobileMenu';
+import Blogs from './Blogs';
+import { motion } from 'framer-motion';
 
 function useTypewriter(text, speed = 50) {
   const [displayText, setDisplayText] = useState('');
@@ -29,6 +32,10 @@ function App() {
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [currentPage, setCurrentPage] = useState('home');
+  const [isFullScreenBlog, setIsFullScreenBlog] = useState(false);
+  const [blogMetadata, setBlogMetadata] = useState([]);
+  const [blogContent, setBlogContent] = useState({});
 
   const skills = [
     { name: 'React', image: '/src/assets/images/react.png' },
@@ -215,51 +222,94 @@ function App() {
     };
   }, [isDarkTheme]);
 
+  useEffect(() => {
+    fetch('/blogMetadata.json')
+      .then(response => response.json())
+      .then(data => setBlogMetadata(data))
+      .catch(error => console.error('Error fetching blog metadata:', error));
+  }, []);
+
+  const fetchBlogContent = async (blogId) => {
+    try {
+      const response = await fetch(`/blogs/${blogId}.md`);
+      const content = await response.text();
+      setBlogContent(prevContent => ({
+        ...prevContent,
+        [blogId]: content
+      }));
+    } catch (error) {
+      console.error(`Error fetching blog content for ${blogId}:`, error);
+    }
+  };
+
   const toggleTheme = () => setIsDarkTheme(!isDarkTheme);
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
-    <div className={`min-h-screen ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}>
+    <div className={`min-h-screen flex flex-col ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}>
       <canvas ref={canvasRef} className="fixed inset-0 z-0" />
-      <Header 
-        isDarkTheme={isDarkTheme} 
-        toggleTheme={toggleTheme} 
+      {!isFullScreenBlog && (
+        <Header 
+          isDarkTheme={isDarkTheme} 
+          toggleTheme={toggleTheme} 
+          isMenuOpen={isMenuOpen} 
+          toggleMenu={toggleMenu}
+          setCurrentPage={setCurrentPage}
+        />
+      )}
+      <MobileMenu 
         isMenuOpen={isMenuOpen} 
         toggleMenu={toggleMenu} 
+        toggleTheme={toggleTheme} 
+        isDarkTheme={isDarkTheme}
+        setCurrentPage={setCurrentPage}
       />
-      <MobileMenu isMenuOpen={isMenuOpen} toggleMenu={toggleMenu} toggleTheme={toggleTheme} isDarkTheme={isDarkTheme} />
-      <main className="container mx-auto px-4 pt-20">
-        <AboutSection />
-        <SkillsSection 
-          skills={skills} 
-          currentSkill={currentSkill} 
-          showAllSkills={showAllSkills} 
-          setShowAllSkills={setShowAllSkills} 
-        />
-        <ProjectsSection 
-          projects={projects} 
-          showAllProjects={showAllProjects} 
-          setShowAllProjects={setShowAllProjects} 
-        />
-        <ContactSection />
+      <main className="flex-grow container mx-auto px-4 pt-20 relative z-10">
+        {currentPage === 'home' && (
+          <>
+            <AboutSection />
+            <SkillsSection 
+              skills={skills} 
+              currentSkill={currentSkill} 
+              showAllSkills={showAllSkills} 
+              setShowAllSkills={setShowAllSkills} 
+            />
+            <ProjectsSection 
+              projects={projects} 
+              showAllProjects={showAllProjects} 
+              setShowAllProjects={setShowAllProjects} 
+            />
+            <ContactSection />
+          </>
+        )}
+        {currentPage === 'blogs' && (
+          <Blogs 
+            isFullScreenBlog={isFullScreenBlog} 
+            setIsFullScreenBlog={setIsFullScreenBlog}
+            blogMetadata={blogMetadata}
+            blogContent={blogContent}
+            fetchBlogContent={fetchBlogContent}
+          />
+        )}
       </main>
-      <Footer />
+      {!isFullScreenBlog && <Footer />}
     </div>
   )
 }
 
-function Header({ isDarkTheme, toggleTheme, isMenuOpen, toggleMenu }) {
+function Header({ isDarkTheme, toggleTheme, isMenuOpen, toggleMenu, setCurrentPage }) {
   return (
     <header className="fixed top-0 left-0 w-full bg-opacity-90 backdrop-filter backdrop-blur-lg z-50 transition-colors duration-300">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <a href="#" className="text-2xl font-bold text-purple-500 hover:text-purple-400 transition-colors duration-300">
+        <a href="#" className="text-2xl font-bold text-purple-500 hover:text-purple-400 transition-colors duration-300" onClick={() => setCurrentPage('home')}>
           prem0x01
         </a>
         <nav className="hidden md:flex space-x-6">
-          <a href="#about" className="nav-link">About</a>
-          <a href="#skills" className="nav-link">Skills</a>
-          <a href="#projects" className="nav-link">Projects</a>
-          <a href="#contact" className="nav-link">Contact</a>
+          <a href="#about" className="nav-link" onClick={() => setCurrentPage('home')}>About</a>
+          <a href="#skills" className="nav-link" onClick={() => setCurrentPage('home')}>Skills</a>
+          <a href="#projects" className="nav-link" onClick={() => setCurrentPage('home')}>Projects</a>
+          <a href="#contact" className="nav-link" onClick={() => setCurrentPage('home')}>Contact</a>
+          <a href="#blogs" className="nav-link" onClick={() => setCurrentPage('blogs')}>Blogs</a>
         </nav>
         <div className="flex items-center space-x-4">
           <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme">
@@ -275,56 +325,6 @@ function Header({ isDarkTheme, toggleTheme, isMenuOpen, toggleMenu }) {
         </div>
       </div>
     </header>
-  )
-}
-
-function MobileMenu({ isMenuOpen, toggleMenu, toggleTheme, isDarkTheme }) {
-  return (
-    <>
-      <div 
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 ${
-          isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}
-        onClick={toggleMenu}
-      ></div>
-      <div 
-        className={`fixed top-0 right-0 w-full sm:w-80 h-full bg-gradient-to-b from-purple-900 to-indigo-900 z-50 transform transition-transform duration-500 ease-in-out ${
-          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          <div className="flex justify-end p-4">
-            <button onClick={toggleMenu} className="text-purple-300 hover:text-purple-100 transition-colors duration-300">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <nav className="flex-grow flex flex-col justify-center items-center space-y-8">
-            {['About', 'Skills', 'Projects', 'Contact'].map((item, index) => (
-              <a 
-                key={item} 
-                href={`#${item.toLowerCase()}`} 
-                onClick={toggleMenu} 
-                className="mobile-nav-link"
-                style={{animationDelay: `${0.1 * (index + 1)}s`}}
-              >
-                {item}
-              </a>
-            ))}
-          </nav>
-          <div className="p-4">
-            <button 
-              onClick={toggleTheme} 
-              className="mobile-theme-toggle w-full"
-              style={{animationDelay: '0.5s'}}
-            >
-              {isDarkTheme ? '☀️ Light Mode' : '🌙 Dark Mode'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
   )
 }
 

@@ -1,0 +1,18 @@
+[
+  {
+    "id": "blog1",
+    "title": "The Future of Cybersecurity",
+    "date": "2023-05-15",
+    "readTime": "5 min read",
+    "tags": ["Cybersecurity", "Technology", "AI"],
+    "excerpt": "Exploring emerging trends and technologies in the cybersecurity landscape..."
+  },
+  {
+    "id": "blog2",
+    "title": "Mastering React Hooks ",
+    "date": "2023-06-02",
+    "readTime": "7 min read",
+    "tags": ["React", "JavaScript", "Web Development"],
+    "excerpt": "A deep dive into React Hooks and how they're changing frontend development..."
+  }
+]
