@@ -1,8 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react'
-import './App.css'
+import React, { useState, useEffect, useRef, Suspense, useMemo } from 'react';
+import './App.css';
 import MobileMenu from './MobileMenu';
 import Blogs from './Blogs';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
+import { TextureLoader } from 'three';
+import { OrbitControls, Text, Sphere, Line, Stars } from '@react-three/drei';
+import * as THREE from 'three';
 
 function useTypewriter(text, speed = 50) {
   const [displayText, setDisplayText] = useState('');
@@ -22,6 +26,163 @@ function useTypewriter(text, speed = 50) {
   }, [text, speed]);
 
   return displayText;
+}
+
+function SkillPlanet({ skill, semiMajorAxis, eccentricity, orbitalPeriod, axialTilt }) {
+  const groupRef = useRef();
+  const planetRef = useRef();
+  const [hovered, setHovered] = useState(false);
+  const texture = useLoader(TextureLoader, skill.image);
+
+  const orbitPoints = useMemo(() => {
+    const points = [];
+    for (let i = 0; i <= 64; i++) {
+      const angle = (i / 64) * Math.PI * 2;
+      const r = semiMajorAxis * (1 - eccentricity * eccentricity) / (1 + eccentricity * Math.cos(angle));
+      points.push(new THREE.Vector3(
+        r * Math.cos(angle),
+        r * Math.sin(angle) * Math.sin(axialTilt),
+        r * Math.sin(angle) * Math.cos(axialTilt)
+      ));
+    }
+    return points;
+  }, [semiMajorAxis, eccentricity, axialTilt]);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime() / orbitalPeriod;
+    const angle = t * Math.PI * 2;
+    const r = semiMajorAxis * (1 - eccentricity * eccentricity) / (1 + eccentricity * Math.cos(angle));
+    
+    groupRef.current.position.x = r * Math.cos(angle);
+    groupRef.current.position.y = r * Math.sin(angle) * Math.sin(axialTilt);
+    groupRef.current.position.z = r * Math.sin(angle) * Math.cos(axialTilt);
+
+    planetRef.current.rotation.y += 0.01;
+  });
+
+  return (
+    <group ref={groupRef}>
+      <Sphere ref={planetRef} args={[0.3, 32, 32]} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
+        <meshStandardMaterial
+          map={texture}
+          metalness={0.4}
+          roughness={0.7}
+          emissive={hovered ? new THREE.Color(0x555555) : new THREE.Color(0x000000)}
+          emissiveIntensity={hovered ? 0.2 : 0}
+        />
+      </Sphere>
+      <Text
+        position={[0, 0.5, 0]}
+        fontSize={0.15}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+      >
+        {skill.name}
+      </Text>
+      <Line
+        points={orbitPoints}
+        color="white"
+        lineWidth={1}
+        opacity={0.2}
+        transparent
+      />
+    </group>
+  );
+}
+
+function SkillSun() {
+  const sunRef = useRef();
+  const coronaRef = useRef();
+
+  useFrame(({ clock }) => {
+    sunRef.current.rotation.y = clock.getElapsedTime() * 0.05;
+    coronaRef.current.rotation.z = clock.getElapsedTime() * 0.02;
+  });
+
+  return (
+    <group>
+      <Sphere ref={sunRef} args={[1, 32, 32]}>
+        <meshStandardMaterial
+          color="yellow"
+          emissive="orange"
+          emissiveIntensity={1}
+          metalness={0.1}
+          roughness={0.6}
+        />
+      </Sphere>
+      <Sphere ref={coronaRef} args={[1.2, 32, 32]}>
+        <meshBasicMaterial color="orange" transparent opacity={0.2} />
+      </Sphere>
+    </group>
+  );
+}
+
+function SkillsSystem({ skills }) {
+  const skillPlanets = useMemo(() => {
+    return skills.map((skill, index) => {
+      const semiMajorAxis = 3 + index * 1.5;
+      const eccentricity = Math.random() * 0.1; // Random eccentricity between 0 and 0.1
+      const orbitalPeriod = Math.sqrt(semiMajorAxis * semiMajorAxis * semiMajorAxis) * 5; // Kepler's Third Law
+      const axialTilt = Math.random() * Math.PI / 6; // Random tilt up to 30 degrees
+      return { skill, semiMajorAxis, eccentricity, orbitalPeriod, axialTilt };
+    });
+  }, [skills]);
+
+  return (
+    <group>
+      <SkillSun />
+      {skillPlanets.map(({ skill, semiMajorAxis, eccentricity, orbitalPeriod, axialTilt }) => (
+        <SkillPlanet
+          key={skill.name}
+          skill={skill}
+          semiMajorAxis={semiMajorAxis}
+          eccentricity={eccentricity}
+          orbitalPeriod={orbitalPeriod}
+          axialTilt={axialTilt}
+        />
+      ))}
+      <ambientLight intensity={0.1} />
+      <pointLight position={[0, 0, 0]} intensity={2} distance={100} decay={2} />
+      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade />
+    </group>
+  );
+}
+
+function SkillsSection({ skills }) {
+  const [showAllSkills, setShowAllSkills] = useState(false);
+
+  return (
+    <section id="skills" className="mb-20">
+      <h2 className="text-3xl font-bold mb-8 text-purple-400">My Skills</h2>
+      <div className="bg-gray-900 bg-opacity-30 backdrop-filter backdrop-blur-sm rounded-lg shadow-lg p-6 border border-purple-500">
+        <div className="h-[600px] w-full mb-8">
+          <Canvas camera={{ position: [0, 20, 30], fov: 60 }}>
+            <SkillsSystem skills={skills} />
+            <OrbitControls enablePan={false} minDistance={10} maxDistance={50} />
+          </Canvas>
+        </div>
+        <div className="text-center mt-4">
+          <button 
+            onClick={() => setShowAllSkills(!showAllSkills)}
+            className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition duration-300"
+          >
+            {showAllSkills ? 'Hide All Skills' : 'View All Skills'}
+          </button>
+        </div>
+      </div>
+      {showAllSkills && (
+        <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {skills.map((skill) => (
+            <div key={skill.name} className="bg-gray-800 bg-opacity-30 backdrop-filter backdrop-blur-sm rounded-lg p-4 flex flex-col items-center">
+              <img src={skill.image} alt={skill.name} className="w-16 h-16 object-contain mb-2" />
+              <p className="text-purple-300">{skill.name}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
 
 function App() {
@@ -131,7 +292,8 @@ function App() {
         // Add an extra glow effect
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2, false);
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.2 * this.glowIntensity})`;
+        const fillColor = `rgba(255, 255, 255, ${0.2 * this.glowIntensity})`;
+        ctx.fillStyle = fillColor;
         ctx.fill();
 
         ctx.shadowBlur = 0;
@@ -238,7 +400,7 @@ function App() {
         [blogId]: content
       }));
     } catch (error) {
-      console.error(`Error fetching blog content for ${blogId}:`, error);
+      console.error('Error fetching blog content:', error);
     }
   };
 
@@ -268,12 +430,7 @@ function App() {
         {currentPage === 'home' && (
           <>
             <AboutSection />
-            <SkillsSection 
-              skills={skills} 
-              currentSkill={currentSkill} 
-              showAllSkills={showAllSkills} 
-              setShowAllSkills={setShowAllSkills} 
-            />
+            <SkillsSection skills={skills} />
             <ProjectsSection 
               projects={projects} 
               showAllProjects={showAllProjects} 
@@ -347,49 +504,6 @@ Beyond coding, I'm writing my book "Pain in Her Eyes," and showcasing my art on 
             {displayText}
           </p>
         </div>
-      </div>
-    </section>
-  )
-}
-
-function SkillsSection({ skills, currentSkill, showAllSkills, setShowAllSkills }) {
-  return (
-    <section id="skills" className="mb-20">
-      <h2 className="text-3xl font-bold mb-8 text-purple-400 text-center">Skills</h2>
-      <div className="bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-lg p-8 rounded-lg shadow-lg border border-purple-500">
-        <div className="flex flex-col items-center mb-8 h-48"> {/* Fixed height */}
-          <div className="skill-animation-container h-24 mb-4 overflow-hidden">
-            <img 
-              key={currentSkill} // Add this key prop
-              src={skills[currentSkill].image} 
-              alt={skills[currentSkill].name} 
-              className="w-24 h-24 object-contain skill-animation"
-            />
-          </div>
-          <div className="skill-animation-container h-8 overflow-hidden">
-            <p key={currentSkill} className="text-xl text-center text-purple-300 skill-animation">
-              <span className="font-bold text-purple-400">{skills[currentSkill].name}</span>
-            </p>
-          </div>
-        </div>
-        <div className="text-center">
-          <button 
-            onClick={() => setShowAllSkills(!showAllSkills)}
-            className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-          >
-            {showAllSkills ? 'Hide All Skills' : 'Show All Skills'}
-          </button>
-        </div>
-        {showAllSkills && (
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto custom-scrollbar">
-            {skills.map((skill, index) => (
-              <div key={index} className="flex flex-col items-center p-4 bg-gray-700 bg-opacity-50 rounded-lg transition-all duration-300 hover:bg-purple-500 hover:bg-opacity-25">
-                <img src={skill.image} alt={skill.name} className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm text-purple-300">{skill.name}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </section>
   )
