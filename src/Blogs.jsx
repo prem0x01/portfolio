@@ -1,15 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+function CodeBlock({ language, value }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative group my-4 bg-gray-900 rounded-md border border-purple-500 overflow-hidden">
+      <div className="absolute top-0 left-0 bg-purple-600 text-white px-2 py-1 text-xs font-mono rounded-br">
+        {language}
+      </div>
+      <button
+        onClick={handleCopy}
+        className="absolute top-0 right-0 bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        {copied ? 'Copied!' : 'Copy'}
+      </button>
+      <SyntaxHighlighter
+        language={language}
+        style={atomDark}
+        customStyle={{
+          margin: 0,
+          padding: '1.5rem 1rem 1rem',
+          borderRadius: '0.375rem',
+          fontSize: '0.875rem',
+          lineHeight: '1.5',
+          backgroundColor: 'transparent',
+        }}
+      >
+        {value}
+      </SyntaxHighlighter>
+    </div>
+  );
+}
 
 function Blogs({ isFullScreenBlog, setIsFullScreenBlog, blogMetadata, blogContent, fetchBlogContent }) {
   const [selectedBlog, setSelectedBlog] = useState(null);
 
-  const handleBlogClick = (blogId) => {
+  const handleBlogClick = async (blogId) => {
     setSelectedBlog(blogId);
     setIsFullScreenBlog(true);
     if (!blogContent[blogId]) {
-      fetchBlogContent(blogId);
+      await fetchBlogContent(blogId);
     }
   };
 
@@ -49,7 +89,7 @@ function Blogs({ isFullScreenBlog, setIsFullScreenBlog, blogMetadata, blogConten
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <h2 className="text-4xl font-bold mb-12 text-purple-400 text-center">My Blog</h2>
+            <h2 className="text-4xl font-bold mb-12 text-purple-400 text-center">Some words on internet 📜</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {blogMetadata.map((blog) => (
                 <motion.div 
@@ -97,7 +137,26 @@ function Blogs({ isFullScreenBlog, setIsFullScreenBlog, blogMetadata, blogConten
                     <span>{blogMetadata.find(blog => blog.id === selectedBlog)?.readTime}</span>
                   </p>
                   <div className="prose prose-sm sm:prose-lg prose-invert max-w-none">
-                    <ReactMarkdown>{blogContent[selectedBlog]}</ReactMarkdown>
+                    <ReactMarkdown
+                      components={{
+                        code({ node, inline, className, children, ...props }) {
+                          const match = /language-(\w+)/.exec(className || '')
+                          return !inline && match ? (
+                            <CodeBlock
+                              language={match[1]}
+                              value={String(children).replace(/\n$/, '')}
+                              {...props}
+                            />
+                          ) : (
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          )
+                        }
+                      }}
+                    >
+                      {blogContent[selectedBlog]}
+                    </ReactMarkdown>
                   </div>
                 </div>
               ) : (

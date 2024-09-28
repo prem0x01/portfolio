@@ -5,7 +5,7 @@ import Blogs from './Blogs';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { TextureLoader } from 'three';
-import { OrbitControls, Text, Sphere, Line, Stars } from '@react-three/drei';
+import { OrbitControls, Text, Sphere, Line, Stars, Html, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 
 function useTypewriter(text, speed = 50) {
@@ -28,61 +28,51 @@ function useTypewriter(text, speed = 50) {
   return displayText;
 }
 
-function SkillPlanet({ skill, semiMajorAxis, eccentricity, orbitalPeriod, axialTilt }) {
+function SkillPlanet({ skill, initialPosition, orbitalPeriod, axialTilt, radius }) {
   const groupRef = useRef();
   const planetRef = useRef();
   const [hovered, setHovered] = useState(false);
   const texture = useLoader(TextureLoader, skill.image);
 
-  const orbitPoints = useMemo(() => {
-    const points = [];
-    for (let i = 0; i <= 64; i++) {
-      const angle = (i / 64) * Math.PI * 2;
-      const r = semiMajorAxis * (1 - eccentricity * eccentricity) / (1 + eccentricity * Math.cos(angle));
-      points.push(new THREE.Vector3(
-        r * Math.cos(angle),
-        r * Math.sin(angle) * Math.sin(axialTilt),
-        r * Math.sin(angle) * Math.cos(axialTilt)
-      ));
-    }
-    return points;
-  }, [semiMajorAxis, eccentricity, axialTilt]);
-
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime() / orbitalPeriod;
     const angle = t * Math.PI * 2;
-    const r = semiMajorAxis * (1 - eccentricity * eccentricity) / (1 + eccentricity * Math.cos(angle));
-    
-    groupRef.current.position.x = r * Math.cos(angle);
-    groupRef.current.position.y = r * Math.sin(angle) * Math.sin(axialTilt);
-    groupRef.current.position.z = r * Math.sin(angle) * Math.cos(axialTilt);
-
+    groupRef.current.position.x = Math.cos(angle) * radius;
+    groupRef.current.position.z = Math.sin(angle) * radius;
+    groupRef.current.position.y = Math.sin(t * 2) * 0.2;
     planetRef.current.rotation.y += 0.01;
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} position={initialPosition}>
       <Sphere ref={planetRef} args={[0.3, 32, 32]} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
         <meshStandardMaterial
           map={texture}
           metalness={0.4}
           roughness={0.7}
-          emissive={hovered ? new THREE.Color(0x555555) : new THREE.Color(0x000000)}
+          emissive={hovered ? new THREE.Color(0x8b5cf6) : new THREE.Color(0x000000)}
           emissiveIntensity={hovered ? 0.2 : 0}
         />
       </Sphere>
-      <Text
-        position={[0, 0.5, 0]}
-        fontSize={0.15}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {skill.name}
-      </Text>
+      <Billboard follow={true} lockX={false} lockY={false} lockZ={false}>
+        <Text
+          position={[0, 0.5, 0]}
+          fontSize={0.15}
+          color="#e9d5ff"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.02}
+          outlineColor="#4c1d95"
+        >
+          {skill.name}
+        </Text>
+      </Billboard>
       <Line
-        points={orbitPoints}
-        color="white"
+        points={new Array(64).fill().map((_, i) => {
+          const a = (i / 64) * Math.PI * 2;
+          return [Math.cos(a) * radius, 0, Math.sin(a) * radius];
+        })}
+        color="#8b5cf6"
         lineWidth={1}
         opacity={0.2}
         transparent
@@ -102,81 +92,128 @@ function SkillSun() {
 
   return (
     <group>
-      <Sphere ref={sunRef} args={[1, 32, 32]}>
+      <Sphere ref={sunRef} args={[0.8, 32, 32]}>
         <meshStandardMaterial
-          color="yellow"
-          emissive="orange"
+          color="#fde047" // Yellow
+          emissive="#f97316" // Orange
           emissiveIntensity={1}
           metalness={0.1}
           roughness={0.6}
         />
       </Sphere>
-      <Sphere ref={coronaRef} args={[1.2, 32, 32]}>
-        <meshBasicMaterial color="orange" transparent opacity={0.2} />
+      <Sphere ref={coronaRef} args={[1, 32, 32]}>
+        <meshBasicMaterial color="#f97316" transparent opacity={0.2} />
       </Sphere>
     </group>
   );
 }
 
-function SkillsSystem({ skills }) {
+function SkillsSystem({ skills, containerSize }) {
   const skillPlanets = useMemo(() => {
+    const totalSkills = skills.length;
+    const aspectRatio = containerSize.width / containerSize.height;
+    const baseRadius = aspectRatio > 1 ? 5 : 6;
+    
     return skills.map((skill, index) => {
-      const semiMajorAxis = 3 + index * 1.5;
-      const eccentricity = Math.random() * 0.1; // Random eccentricity between 0 and 0.1
-      const orbitalPeriod = Math.sqrt(semiMajorAxis * semiMajorAxis * semiMajorAxis) * 5; // Kepler's Third Law
-      const axialTilt = Math.random() * Math.PI / 6; // Random tilt up to 30 degrees
-      return { skill, semiMajorAxis, eccentricity, orbitalPeriod, axialTilt };
+      const angle = (index / totalSkills) * Math.PI * 2;
+      const radius = baseRadius + (index * 0.8); // Increase spacing between orbits
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const orbitalPeriod = 20 + (index * 5);
+      const axialTilt = Math.random() * Math.PI / 6;
+      return { skill, position: [x, 0, z], orbitalPeriod, axialTilt, radius };
     });
-  }, [skills]);
+  }, [skills, containerSize]);
 
   return (
     <group>
       <SkillSun />
-      {skillPlanets.map(({ skill, semiMajorAxis, eccentricity, orbitalPeriod, axialTilt }) => (
+      {skillPlanets.map(({ skill, position, orbitalPeriod, axialTilt, radius }) => (
         <SkillPlanet
           key={skill.name}
           skill={skill}
-          semiMajorAxis={semiMajorAxis}
-          eccentricity={eccentricity}
+          initialPosition={position}
           orbitalPeriod={orbitalPeriod}
           axialTilt={axialTilt}
+          radius={radius}
         />
       ))}
-      <ambientLight intensity={0.1} />
-      <pointLight position={[0, 0, 0]} intensity={2} distance={100} decay={2} />
-      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade />
+      <ambientLight intensity={0.2} />
+      <pointLight position={[0, 0, 0]} intensity={2} distance={50} decay={2} />
+      <Stars radius={30} depth={30} count={3000} factor={4} saturation={0} fade color="#8b5cf6" />
+      <fog attach="fog" args={['#2d1b69', 20, 40]} />
     </group>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <Html center>
+      <div className="loading">
+        <div className="loading-text">
+          Loading Skills Universe...
+        </div>
+        <div className="loading-progress"></div>
+      </div>
+    </Html>
   );
 }
 
 function SkillsSection({ skills }) {
   const [showAllSkills, setShowAllSkills] = useState(false);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        setContainerSize({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight
+        });
+      }
+    };
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   return (
     <section id="skills" className="mb-20">
       <h2 className="text-3xl font-bold mb-8 text-purple-400">My Skills</h2>
-      <div className="bg-gray-900 bg-opacity-30 backdrop-filter backdrop-blur-sm rounded-lg shadow-lg p-6 border border-purple-500">
-        <div className="h-[600px] w-full mb-8">
-          <Canvas camera={{ position: [0, 20, 30], fov: 60 }}>
-            <SkillsSystem skills={skills} />
-            <OrbitControls enablePan={false} minDistance={10} maxDistance={50} />
-          </Canvas>
-        </div>
-        <div className="text-center mt-4">
-          <button 
-            onClick={() => setShowAllSkills(!showAllSkills)}
-            className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition duration-300"
-          >
-            {showAllSkills ? 'Hide All Skills' : 'View All Skills'}
-          </button>
-        </div>
+      <div ref={containerRef} className="bg-black bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-lg shadow-lg p-4 border border-purple-500 w-full h-[60vh] mb-8">
+        <Canvas camera={{ position: [0, 0, 20], fov: 50 }}>
+          <color attach="background" args={['#000000']} />
+          <Suspense fallback={<LoadingScreen />}>
+            <SkillsSystem skills={skills} containerSize={containerSize} />
+          </Suspense>
+          <OrbitControls enablePan={false} enableZoom={true} maxDistance={30} minDistance={10} />
+        </Canvas>
       </div>
+      
+      <div className="text-center mb-8">
+        <button 
+          onClick={() => setShowAllSkills(!showAllSkills)}
+          className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+        >
+          {showAllSkills ? "Hide All Skills" : "View All Skills"}
+        </button>
+      </div>
+
       {showAllSkills && (
-        <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {skills.map((skill) => (
-            <div key={skill.name} className="bg-gray-800 bg-opacity-30 backdrop-filter backdrop-blur-sm rounded-lg p-4 flex flex-col items-center">
-              <img src={skill.image} alt={skill.name} className="w-16 h-16 object-contain mb-2" />
-              <p className="text-purple-300">{skill.name}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {skills.map((skill, index) => (
+            <div 
+              key={index} 
+              className="bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-sm rounded-lg p-4 flex flex-col items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-lg border border-purple-500"
+            >
+              <img 
+                src={skill.image} 
+                alt={skill.name} 
+                className="w-16 h-16 object-contain mb-2"
+              />
+              <p className="text-purple-300 text-center">{skill.name}</p>
             </div>
           ))}
         </div>

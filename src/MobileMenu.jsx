@@ -3,11 +3,11 @@ import { motion } from 'framer-motion';
 
 function MobileMenu({ isMenuOpen, toggleMenu, toggleTheme, isDarkTheme, setCurrentPage }) {
   const menuItems = [
-    { name: 'About', icon: '👤' },
-    { name: 'Skills', icon: '🛠️' },
-    { name: 'Projects', icon: '🚀' },
-    { name: 'Contact', icon: '📧' },
-    { name: 'Blogs', icon: '📝' },
+    { name: 'About', icon: '👤', section: 'home' },
+    { name: 'Skills', icon: '🛠️', section: 'home' },
+    { name: 'Projects', icon: '🚀', section: 'home' },
+    { name: 'Contact', icon: '📧', section: 'home' },
+    { name: 'Blogs', icon: '📝', section: 'blogs' },
   ];
 
   const menuVariants = {
@@ -18,6 +18,19 @@ function MobileMenu({ isMenuOpen, toggleMenu, toggleTheme, isDarkTheme, setCurre
   const itemVariants = {
     closed: { x: 50, opacity: 0 },
     open: { x: 0, opacity: 1 },
+  };
+
+  const handleNavClick = (section, itemName) => {
+    setCurrentPage(section);
+    toggleMenu();
+    if (section === 'home') {
+      setTimeout(() => {
+        const element = document.getElementById(itemName.toLowerCase());
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   };
 
   return (
@@ -42,10 +55,7 @@ function MobileMenu({ isMenuOpen, toggleMenu, toggleTheme, isDarkTheme, setCurre
               key={item.name}
               href={`#${item.name.toLowerCase()}`}
               className="block py-3 text-lg hover:text-purple-400 transition-colors duration-300"
-              onClick={() => {
-                setCurrentPage(item.name.toLowerCase() === 'about' ? 'home' : item.name.toLowerCase());
-                toggleMenu();
-              }}
+              onClick={() => handleNavClick(item.section, item.name)}
               variants={itemVariants}
               initial="closed"
               animate="open"

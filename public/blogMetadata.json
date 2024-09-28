@@ -1,18 +1,18 @@
 [
   {
     "id": "blog1",
-    "title": "The Future of Cybersecurity",
-    "date": "2023-05-15",
+    "title": "LOLBins",
+    "date": "2024-09-27",
     "readTime": "5 min read",
     "tags": ["Cybersecurity", "Technology", "AI"],
-    "excerpt": "Exploring emerging trends and technologies in the cybersecurity landscape..."
+    "excerpt": "What is lolbins and what it can do let's find out ..."
   },
   {
     "id": "blog2",
-    "title": "Mastering React Hooks ",
-    "date": "2023-06-02",
+    "title": "Null Byte Injection",
+    "date": "2024-02-15",
     "readTime": "7 min read",
-    "tags": ["React", "JavaScript", "Web Development"],
-    "excerpt": "A deep dive into React Hooks and how they're changing frontend development..."
+    "tags": ["NullByteInjection", "JavaScript", "Web Development"],
+    "excerpt": "What is null byte injection, Let's find out ..."
   }
 ]
