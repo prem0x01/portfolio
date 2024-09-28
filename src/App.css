@@ -4,7 +4,7 @@
 
 :root {
   --primary-color: #4a0e82;
-  --secondary-color: #7c3aed;
+  --secondary-color: #5a29b0;
   --accent-color: #00b4d8;
   --background-light: #f0f4f8;
   --text-light: #2d3748;
@@ -22,9 +22,9 @@
 
 .light-theme {
   --bg-color: var(--background-light);
-  --text-color: var(--text-light);
-  --text-color-secondary: var(--text-light-secondary);
-  --card-bg-color: rgba(74, 14, 130, 0.1);
+  --text-color: #27004b;
+  --text-color-secondary: #620bb9;
+  --card-bg-color: rgb(76, 11, 137);
   --header-bg-color: rgba(240, 244, 248, 0.9);
   --border-color: var(--secondary-color);
   --shadow-color: rgba(0, 0, 0, 0.1);
@@ -1038,4 +1038,20 @@ input, textarea {
   #skills .aspect-\[4\/3\] {
     aspect-ratio: 3 / 2;
   }
+}
+
+@keyframes blink {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  background-color: #a855f7; /* Tailwind's purple-500 */
+  margin-left: 2px;
+  animation: blink 0.7s infinite;
+  vertical-align: middle;
 }

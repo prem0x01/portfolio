@@ -31,6 +31,8 @@ function useTypewriter(text, speed = 50) {
 function SkillPlanet({ skill, initialPosition, orbitalPeriod, axialTilt, radius }) {
   const groupRef = useRef();
   const planetRef = useRef();
+  const moon1Ref = useRef();
+  const moon2Ref = useRef();
   const [hovered, setHovered] = useState(false);
   const texture = useLoader(TextureLoader, skill.image);
 
@@ -41,10 +43,19 @@ function SkillPlanet({ skill, initialPosition, orbitalPeriod, axialTilt, radius 
     groupRef.current.position.z = Math.sin(angle) * radius;
     groupRef.current.position.y = Math.sin(t * 2) * 0.2;
     planetRef.current.rotation.y += 0.01;
+
+    if (isPython) {
+      moon1Ref.current.rotation.y += 0.02;
+      moon2Ref.current.rotation.y -= 0.015;
+    }
   });
+
+  const isPython = skill.name.toLowerCase() === 'python';
+  const isGo = skill.name.toLowerCase() === 'go';
 
   return (
     <group ref={groupRef} position={initialPosition}>
+      <pointLight intensity={0.5} distance={2} color="#ffffff" />
       <Sphere ref={planetRef} args={[0.3, 32, 32]} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
         <meshStandardMaterial
           map={texture}
@@ -54,6 +65,42 @@ function SkillPlanet({ skill, initialPosition, orbitalPeriod, axialTilt, radius 
           emissiveIntensity={hovered ? 0.2 : 0}
         />
       </Sphere>
+      {isPython && (
+        <>
+          <group rotation={[Math.PI / 2, 0, 0]}>
+            <mesh>
+              <ringGeometry args={[0.4, 0.5, 64]} />
+              <meshStandardMaterial color="#4B8BBE" side={THREE.DoubleSide} transparent opacity={0.7} />
+            </mesh>
+            <mesh>
+              <ringGeometry args={[0.6, 0.7, 64]} />
+              <meshStandardMaterial color="#FFD43B" side={THREE.DoubleSide} transparent opacity={0.7} />
+            </mesh>
+          </group>
+          <group ref={moon1Ref}>
+            <Sphere args={[0.05, 16, 16]} position={[0.5, 0, 0]}>
+              <meshStandardMaterial color="#4B8BBE" />
+            </Sphere>
+          </group>
+          <group ref={moon2Ref}>
+            <Sphere args={[0.04, 16, 16]} position={[-0.4, 0.2, 0]}>
+              <meshStandardMaterial color="#FFD43B" />
+            </Sphere>
+          </group>
+        </>
+      )}
+      {isGo && (
+        <group rotation={[Math.PI / 2, 0, 0]}>
+          <mesh>
+            <ringGeometry args={[0.4, 0.5, 64]} />
+            <meshStandardMaterial color="#00ADD8" side={THREE.DoubleSide} transparent opacity={0.7} />
+          </mesh>
+          <mesh>
+            <ringGeometry args={[0.6, 0.7, 64]} />
+            <meshStandardMaterial color="#5DC9E2" side={THREE.DoubleSide} transparent opacity={0.7} />
+          </mesh>
+        </group>
+      )}
       <Billboard follow={true} lockX={false} lockY={false} lockZ={false}>
         <Text
           position={[0, 0.5, 0]}
@@ -77,9 +124,14 @@ function SkillPlanet({ skill, initialPosition, orbitalPeriod, axialTilt, radius 
         opacity={0.2}
         transparent
       />
+      <mesh>
+        <sphereGeometry args={[0.31, 32, 32]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.1} />
+      </mesh>
     </group>
   );
 }
+
 
 function SkillSun() {
   const sunRef = useRef();
@@ -92,17 +144,193 @@ function SkillSun() {
 
   return (
     <group>
-      <Sphere ref={sunRef} args={[0.8, 32, 32]}>
-        <meshStandardMaterial
-          color="#fde047" // Yellow
-          emissive="#f97316" // Orange
-          emissiveIntensity={1}
-          metalness={0.1}
-          roughness={0.6}
+      <Sphere ref={sunRef} args={[0.8, 64, 64]}>
+        <shaderMaterial
+          fragmentShader={`
+            uniform float time;
+            varying vec2 vUv;
+            
+            // Improved noise function for more realistic sun surface
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+            vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+            float snoise(vec3 v) {
+              const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+              const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+              vec3 i  = floor(v + dot(v, C.yyy));
+              vec3 x0 = v - i + dot(i, C.xxx);
+              vec3 g = step(x0.yzx, x0.xyz);
+              vec3 l = 1.0 - g;
+              vec3 i1 = min(g.xyz, l.zxy);
+              vec3 i2 = max(g.xyz, l.zxy);
+              vec3 x1 = x0 - i1 + C.xxx;
+              vec3 x2 = x0 - i2 + C.yyy;
+              vec3 x3 = x0 - D.yyy;
+              i = mod289(i);
+              vec4 p = permute(permute(permute(
+                        i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                      + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                      + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+              float n_ = 0.142857142857;
+              vec3 ns = n_ * D.wyz - D.xzx;
+              vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+              vec4 x_ = floor(j * ns.z);
+              vec4 y_ = floor(j - 7.0 * x_);
+              vec4 x = x_ *ns.x + ns.yyyy;
+              vec4 y = y_ *ns.x + ns.yyyy;
+              vec4 h = 1.0 - abs(x) - abs(y);
+              vec4 b0 = vec4(x.xy, y.xy);
+              vec4 b1 = vec4(x.zw, y.zw);
+              vec4 s0 = floor(b0)*2.0 + 1.0;
+              vec4 s1 = floor(b1)*2.0 + 1.0;
+              vec4 sh = -step(h, vec4(0.0));
+              vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+              vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+              vec3 p0 = vec3(a0.xy, h.x);
+              vec3 p1 = vec3(a0.zw, h.y);
+              vec3 p2 = vec3(a1.xy, h.z);
+              vec3 p3 = vec3(a1.zw, h.w);
+              vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+              p0 *= norm.x;
+              p1 *= norm.y;
+              p2 *= norm.z;
+              p3 *= norm.w;
+              vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+              m = m * m;
+              return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+            }
+            
+            void main() {
+              vec2 uv = vUv;
+              float n = snoise(vec3(uv * 20.0, time * 0.1)) * 0.5 + 0.5;
+              
+              // Create sun spots
+              float spots = smoothstep(0.4, 0.5, snoise(vec3(uv * 8.0, time * 0.05)));
+              
+              // Create solar flares
+              float flares = pow(snoise(vec3(uv * 15.0, time * 0.2)), 3.0) * 0.3;
+              
+              // Mix colors for a more realistic sun appearance
+              vec3 baseColor = mix(vec3(1.0, 0.6, 0.1), vec3(1.0, 0.4, 0.0), n);
+              baseColor = mix(baseColor, vec3(0.8, 0.2, 0.0), spots);
+              baseColor += vec3(1.0, 0.6, 0.3) * flares;
+              
+              // Add glow
+              float glow = 1.0 - length(uv - 0.5) * 2.0;
+              baseColor += vec3(1.0, 0.8, 0.6) * pow(glow, 3.0) * 0.3;
+              
+              gl_FragColor = vec4(baseColor, 1.0);
+            }
+          `}
+          vertexShader={`
+            varying vec2 vUv;
+            
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `}
+          uniforms={{
+            time: { value: 0 }
+          }}
         />
       </Sphere>
-      <Sphere ref={coronaRef} args={[1, 32, 32]}>
-        <meshBasicMaterial color="#f97316" transparent opacity={0.2} />
+      <Sphere ref={coronaRef} args={[1.2, 64, 64]}>
+        <shaderMaterial
+          fragmentShader={`
+            uniform float time;
+            varying vec2 vUv;
+            
+            // Use the same improved noise function as in the sun shader
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+            vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+            float snoise(vec3 v) {
+              const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+              const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+              vec3 i  = floor(v + dot(v, C.yyy));
+              vec3 x0 = v - i + dot(i, C.xxx);
+              vec3 g = step(x0.yzx, x0.xyz);
+              vec3 l = 1.0 - g;
+              vec3 i1 = min(g.xyz, l.zxy);
+              vec3 i2 = max(g.xyz, l.zxy);
+              vec3 x1 = x0 - i1 + C.xxx;
+              vec3 x2 = x0 - i2 + C.yyy;
+              vec3 x3 = x0 - D.yyy;
+              i = mod289(i);
+              vec4 p = permute(permute(permute(
+                        i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                      + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                      + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+              float n_ = 0.142857142857;
+              vec3 ns = n_ * D.wyz - D.xzx;
+              vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+              vec4 x_ = floor(j * ns.z);
+              vec4 y_ = floor(j - 7.0 * x_);
+              vec4 x = x_ *ns.x + ns.yyyy;
+              vec4 y = y_ *ns.x + ns.yyyy;
+              vec4 h = 1.0 - abs(x) - abs(y);
+              vec4 b0 = vec4(x.xy, y.xy);
+              vec4 b1 = vec4(x.zw, y.zw);
+              vec4 s0 = floor(b0)*2.0 + 1.0;
+              vec4 s1 = floor(b1)*2.0 + 1.0;
+              vec4 sh = -step(h, vec4(0.0));
+              vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+              vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+              vec3 p0 = vec3(a0.xy, h.x);
+              vec3 p1 = vec3(a0.zw, h.y);
+              vec3 p2 = vec3(a1.xy, h.z);
+              vec3 p3 = vec3(a1.zw, h.w);
+              vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+              p0 *= norm.x;
+              p1 *= norm.y;
+              p2 *= norm.z;
+              p3 *= norm.w;
+              vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+              m = m * m;
+              return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+            }
+            
+            void main() {
+              vec2 uv = vUv;
+              float dist = length(uv - 0.5) * 2.0;
+              
+              // Create more dynamic flame-like effect
+              float flameNoise = snoise(vec3(uv * 8.0, time * 0.5)) * 0.5 + 0.5;
+              float flameShape = pow(1.0 - dist, 2.0) * flameNoise;
+              
+              // Add flickering effect
+              float flicker = sin(time * 10.0) * 0.1 + 0.9;
+              
+              // Create color gradient for flames
+              vec3 innerColor = vec3(1.0, 0.7, 0.3);
+              vec3 outerColor = vec3(1.0, 0.3, 0.1);
+              vec3 flameColor = mix(innerColor, outerColor, flameShape);
+              
+              // Add some "licks" to the flames
+              float licks = pow(max(0.0, sin(atan(uv.y - 0.5, uv.x - 0.5) * 20.0 + flameNoise * 10.0)), 10.0) * 0.15;
+              flameColor += vec3(1.0, 0.6, 0.3) * licks;
+              
+              float alpha = smoothstep(1.0, 0.1, dist) * flameShape * flicker;
+              
+              gl_FragColor = vec4(flameColor, alpha);
+            }
+          `}
+          vertexShader={`
+            varying vec2 vUv;
+            
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `}
+          uniforms={{
+            time: { value: 0 }
+          }}
+          transparent={true}
+        />
       </Sphere>
     </group>
   );
@@ -140,7 +368,16 @@ function SkillsSystem({ skills, containerSize }) {
       ))}
       <ambientLight intensity={0.2} />
       <pointLight position={[0, 0, 0]} intensity={2} distance={50} decay={2} />
-      <Stars radius={30} depth={30} count={3000} factor={4} saturation={0} fade color="#8b5cf6" />
+      <Stars
+        radius={100} 
+        depth={50}   
+        count={5000} 
+        factor={2}   
+        saturation={0}
+        fade
+        speed={0.2}  
+        color="#8b5cf6"
+      />
       <fog attach="fog" args={['#2d1b69', 20, 40]} />
     </group>
   );
@@ -236,18 +473,18 @@ function App() {
   const [blogContent, setBlogContent] = useState({});
 
   const skills = [
-    { name: 'React', image: '/src/assets/images/react.png' },
-    { name: 'JavaScript', image: '/src/assets/images/js.png' },
-    { name: 'Node.js', image: '/src/assets/images/nodejs.png' },
-    { name: 'Python', image: '/src/assets/images/python.png' },
-    { name: 'Go', image: '/src/assets/images/golang.png' },
-    { name: 'Java', image: '/src/assets/images/java.png' },
-    { name: 'Git', image: '/src/assets/images/git.png' },
-    { name: 'SQL', image: '/src/assets/images/database.png' },
-    { name: 'C', image: '/src/assets/images/c.png' },
-    { name: 'php', image: '/src/assets/images/php.png' },
-    { name: 'Kubernetes', image: '/src/assets/images/kubernetes.1024x996.png' },
-    { name: 'Docker', image: '/src/assets/images/social.png' },
+    { name: 'React', image: '/images/react.png' },
+    { name: 'JavaScript', image: '/images/js.png' },
+    { name: 'Node.js', image: '/images/nodejs.png' },
+    { name: 'Python', image: '/images/python.png' },
+    { name: 'Go', image: '/images/golang.png' },
+    { name: 'Java', image: '/images/java.png' },
+    { name: 'Git', image: '/images/git.png' },
+    { name: 'SQL', image: '/images/database.png' },
+    { name: 'C', image: '/images/c.png' },
+    { name: 'php', image: '/images/php.png' },
+    { name: 'Kubernetes', image: '/images/kubernetes.1024x996.png' },
+    { name: 'Docker', image: '/images/social.png' },
   ];
 
   const projects = [
@@ -523,16 +760,16 @@ function Header({ isDarkTheme, toggleTheme, isMenuOpen, toggleMenu, setCurrentPa
 }
 
 function AboutSection() {
-  const aboutText = `Hey! I'm Prem Mankar—a tech enthusiast, cybersecurity aficionado, and creative artist. Pursuing a Bachelor's in Computer Science at BAMU, I specialize in building secure, innovative applications and conducting vulnerability assessments.
-
-Beyond coding, I'm writing my book "Pain in Her Eyes," and showcasing my art on Instagram. I'm now seeking an entry-level role in software development or cybersecurity to combine my passion for tech and creativity. Let's connect and build something extraordinary!`;
+  const aboutText = `Hey 🙋‍♂️, I’m Prem Mankar—a tech explore💻r and creative soul🎨, currently pursuing Computer Science at BAMU. Cybersecurity is my playground, and the mysteries of the universe 🔭 fuel my thinking. Whether I'm coding, solving vulnerabilities 🔐, or diving into cosmology 🚀, I love blending big ideas into innovative solutions. 
+  
+  Outside of tech, I’m writing my book 📖 "Pain in Her Eyes" and showcasing my art on Instagram 📸. Ready to bring fresh energy to software development and cybersecurity—let’s connect and build something remarkable!`;
 
   const displayText = useTypewriter(aboutText, 20); // Adjust speed as needed
 
   return (
     <section id="about" className="mb-20 flex flex-col md:flex-row items-center">
       <div className="md:w-1/3 mb-8 md:mb-0">
-        <img src="/src/assets/images/me.jpeg" alt="Prem Mankar" className="rounded-full w-48 h-48 object-cover mx-auto border-4 border-purple-400" />
+        <img src="/images/me.jpeg" alt="Prem Mankar" className="rounded-full w-48 h-48 object-cover mx-auto border-4 border-purple-400" />
       </div>
       <div className="md:w-2/3 md:pl-8">
         <h2 className="text-3xl font-bold mb-4 text-purple-400">About Me</h2>
@@ -589,7 +826,7 @@ function ProjectsSection({ projects, showAllProjects, setShowAllProjects }) {
       )}
       {showPopup && (
         <div className="fixed bottom-4 right-4 bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
-          Project hasn't been deployed yet.
+         🐵 Project hasn't been deployed yet.
         </div>
       )}
     </section>

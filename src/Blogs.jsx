@@ -14,30 +14,48 @@ function CodeBlock({ language, value }) {
   };
 
   return (
-    <div className="relative group my-4 bg-gray-900 rounded-md border border-purple-500 overflow-hidden">
-      <div className="absolute top-0 left-0 bg-purple-600 text-white px-2 py-1 text-xs font-mono rounded-br">
+    <div className="relative group my-4 bg-gray-900 rounded-lg border border-purple-500 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300">
+      <div className="absolute top-0 left-0 bg-purple-700 hover:bg-purple-800 text-bg-color px-3 py-1 text-sm font-mono rounded-br-lg">
         {language}
       </div>
       <button
         onClick={handleCopy}
-        className="absolute top-0 right-0 bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-0 right-0 bg-purple-700 hover:bg-purple-800 text-bg-color px-3 py-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
       >
-        {copied ? 'Copied!' : 'Copy'}
+        {copied ? '✓ Copied!' : 'Copy'}
       </button>
-      <SyntaxHighlighter
-        language={language}
-        style={atomDark}
-        customStyle={{
-          margin: 0,
-          padding: '1.5rem 1rem 1rem',
-          borderRadius: '0.375rem',
-          fontSize: '0.875rem',
-          lineHeight: '1.5',
-          backgroundColor: 'transparent',
-        }}
-      >
-        {value}
-      </SyntaxHighlighter>
+      <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-transparent">
+        <SyntaxHighlighter
+          language={language}
+          style={{
+            ...atomDark,
+            'pre[class*="language-"]': {
+              ...atomDark['pre[class*="language-"]'],
+              background: 'transparent',
+            },
+            'code[class*="language-"]': {
+              ...atomDark['code[class*="language-"]'],
+              color: 'var(--text-color)',
+            },
+            'token.keyword': { color: '#ff79c6' },
+            'token.string': { color: '#f1fa8c' },
+            'token.function': { color: '#50fa7b' },
+            'token.number': { color: '#bd93f9' },
+            'token.operator': { color: '#ff79c6' },
+            'token.comment': { color: '#6272a4' },
+          }}
+          customStyle={{
+            margin: 0,
+            padding: '2rem 1.5rem 1.5rem',
+            borderRadius: '0.5rem',
+            fontSize: '0.9rem',
+            lineHeight: '1.6',
+            backgroundColor: 'transparent',
+          }}
+        >
+          {value}
+        </SyntaxHighlighter>
+      </div>
     </div>
   );
 }
