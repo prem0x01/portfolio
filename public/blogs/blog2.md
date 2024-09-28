@@ -22,8 +22,6 @@ On the surface, this seems fine. But here’s the issue—without proper sanitiz
 **🚩 Null Byte Injection Attack**
 An attacker could input the following:
 ```
-perl
-
 profile.php%00.jpg
 ```
 In many older versions of PHP (and languages with C-style string handling), the %00 (which represents the null byte \0) would terminate the string before the .jpg extension check. The server would see the file as:
