@@ -774,7 +774,7 @@ function AboutSection() {
       <div className="md:w-2/3 md:pl-8">
         <h2 className="text-3xl font-bold mb-4 text-purple-400">About Me</h2>
         <div className="h-64 overflow-y-auto custom-scrollbar">
-          <p className="text-purple-300 whitespace-pre-line">
+          <p className="text-purple-400 whitespace-pre-line">
             {displayText}
           </p>
         </div>
