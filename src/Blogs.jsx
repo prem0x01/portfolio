@@ -15,12 +15,12 @@ function CodeBlock({ language, value }) {
 
   return (
     <div className="relative group my-4 bg-gray-900 rounded-lg border border-purple-500 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300">
-      <div className="absolute top-0 left-0 bg-purple-700 hover:bg-purple-800 text-bg-color px-3 py-1 text-sm font-mono rounded-br-lg">
+      <div className="absolute top-0 left-0 bg-purple-700 hover:bg-purple-800 text-white px-3 py-1 text-sm font-mono rounded-br-lg">
         {language}
       </div>
       <button
         onClick={handleCopy}
-        className="absolute top-0 right-0 bg-purple-700 hover:bg-purple-800 text-bg-color px-3 py-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        className="absolute top-0 right-0 bg-purple-700 hover:bg-purple-800 text-white px-3 py-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
       >
         {copied ? '✓ Copied!' : 'Copy'}
       </button>
@@ -94,7 +94,7 @@ function Blogs({ isFullScreenBlog, setIsFullScreenBlog, blogMetadata, blogConten
   }, [isFullScreenBlog]);
 
   return (
-    <motion.div 
+    <motion.div
       className={`blogs-container ${isFullScreenBlog ? 'pt-0' : 'pt-20'}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -110,47 +110,46 @@ function Blogs({ isFullScreenBlog, setIsFullScreenBlog, blogMetadata, blogConten
             <h2 className="text-4xl font-bold mb-12 text-purple-400 text-center">Some words on internet 📜</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {blogMetadata.map((blog) => (
-                <motion.div 
-                  key={blog.id} 
-                  className="bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-lg rounded-lg shadow-lg p-6 cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-xl border border-purple-500"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleBlogClick(blog.id)}
-                >
-                  {/* Display the thumbnail image if it exists */}
-                  {blog.thumbnail && (
-                    <img
-                      src={blog.thumbnail}
-                      alt={blog.title}
-                      className="w-full h-48 object-cover rounded-lg mb-4"
-                    />
-                  )}
-
-                  <h3 className="text-2xl font-semibold mb-3 text-purple-400">{blog.title}</h3>
-                  <p className="text-purple-300 mb-3 text-sm">
-                    <span className="mr-3">{formatDate(blog.date)}</span>
-                    <span>{blog.readTime}</span>
-                  </p>
-                  <p className="text-purple-300 mb-4 line-clamp-3">{blog.excerpt}</p>
-                  <div className="flex flex-wrap mb-4">
-                    {blog.tags.map((tag, index) => (
-                      <span key={index} className="bg-purple-500 text-white px-2 py-1 rounded-full text-xs mr-2 mb-2">{tag}</span>
-                    ))}
-                  </div>
-                  <button 
-                    className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded transition-colors duration-300"
-                  >
-                    Read More
-                  </button>
-                </motion.div>
+              <motion.div
+              key={blog.id}
+              className="bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-lg rounded-lg shadow-lg p-6 cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-xl border border-purple-500 relative overflow-hidden"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleBlogClick(blog.id)}
+            >
+              <div className="absolute inset-0 bg-purple-500 bg-opacity-30 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              {blog.thumbnail && (
+                <img
+                  src={blog.thumbnail}
+                  alt={blog.title}
+                  className="w-full h-48 object-cover rounded-lg mb-4"
+                />
+              )}
+              <h3 className="text-2xl font-semibold mb-3 text-purple-400">{blog.title}</h3>
+              <p className="text-purple-300 mb-3 text-sm">
+                <span className="mr-3">{formatDate(blog.date)}</span>
+                <span>{blog.readTime}</span>
+              </p>
+              <p className="text-purple-300 mb-4 line-clamp-3">{blog.excerpt}</p>
+              <div className="flex flex-wrap mb-4">
+                {blog.tags.map((tag, index) => (
+                  <span key={index} className="bg-purple-500 text-white px-2 py-1 rounded-full text-xs mr-2 mb-2">{tag}</span>
+                ))}
+              </div>
+              <button
+                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded transition-colors duration-300"
+              >
+                Read More
+              </button>
+            </motion.div>
+            
               ))}
             </div>
           </motion.div>
         )}
 
-        {/* Full-screen blog content */}
         {isFullScreenBlog && selectedBlog && (
-          <motion.div 
+          <motion.div
             className="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 overflow-y-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -159,16 +158,19 @@ function Blogs({ isFullScreenBlog, setIsFullScreenBlog, blogMetadata, blogConten
             <div className="container mx-auto px-4 py-8 max-w-3xl min-h-screen flex flex-col">
               {blogContent[selectedBlog] ? (
                 <div className="bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-lg rounded-lg shadow-lg p-4 sm:p-8 border border-purple-500 flex-grow">
-                  <h1 className="text-2xl sm:text-4xl font-bold mb-4 text-purple-400 break-words">{blogMetadata.find(blog => blog.id === selectedBlog)?.title}</h1>
+                  <h1 className="text-2xl sm:text-4xl font-bold mb-4 text-purple-400 break-words">
+                    {blogMetadata.find(blog => blog.id === selectedBlog)?.title}
+                  </h1>
                   <p className="text-purple-300 mb-6 text-sm sm:text-base">
                     <span className="mr-4">{formatDate(blogMetadata.find(blog => blog.id === selectedBlog)?.date)}</span>
                     <span>{blogMetadata.find(blog => blog.id === selectedBlog)?.readTime}</span>
                   </p>
-                  <div className="prose prose-sm sm:prose-lg prose-invert max-w-none">
+
+                  <div className="prose max-w-none text-left">
                     <ReactMarkdown
                       components={{
                         code({ node, inline, className, children, ...props }) {
-                          const match = /language-(\w+)/.exec(className || '')
+                          const match = /language-(\w+)/.exec(className || '');
                           return !inline && match ? (
                             <CodeBlock
                               language={match[1]}
@@ -176,11 +178,24 @@ function Blogs({ isFullScreenBlog, setIsFullScreenBlog, blogMetadata, blogConten
                               {...props}
                             />
                           ) : (
-                            <code className={className} {...props}>
+                            <code className={className} style={{ color: 'white' }} {...props}>
                               {children}
                             </code>
-                          )
-                        }
+                          );
+                        },
+                        img: ({ node, ...props }) => (
+                          <img {...props} className="max-w-full h-auto rounded-lg my-4" />
+                        ),
+                        audio: ({ node, ...props }) => (
+                          <audio controls {...props} className="my-4 w-full">
+                            Your browser does not support the audio element.
+                          </audio>
+                        ),
+                        video: ({ node, ...props }) => (
+                          <video controls {...props} className="my-4 w-full">
+                            Your browser does not support the video element.
+                          </video>
+                        ),
                       }}
                     >
                       {blogContent[selectedBlog]}
@@ -193,7 +208,7 @@ function Blogs({ isFullScreenBlog, setIsFullScreenBlog, blogMetadata, blogConten
                 </div>
               )}
               <div className="mt-6 flex justify-center">
-                <button 
+                <button
                   onClick={handleCloseFullScreen}
                   className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded transition-colors duration-300"
                 >

@@ -1055,3 +1055,16 @@ input, textarea {
   animation: blink 0.7s infinite;
   vertical-align: middle;
 }
+
+.markdown h4 {
+  color: #ff79c6; /* Heading color (e.g., pink) */
+}
+
+.markdown h4 + p {
+  color: #f1fa8c; /* Text following the heading (e.g., yellow) */
+}
+
+.group:hover .glow-effect {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
