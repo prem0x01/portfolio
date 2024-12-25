@@ -87,7 +87,7 @@ Follow these steps to configure the botnet panel:
 
 ### **2. Installing the Botnet on a Target Device**  
 
-#### **Decompiling and Modifying the APK**  
+### **Decompiling and Modifying the APK**  
 1. Locate the calculator APK provided in the Rouge Botnet package.  
 2. **Decompile the APK:**  
    - Extract the APK files using an APK decompiler.  
@@ -97,7 +97,7 @@ Follow these steps to configure the botnet panel:
 3. Replace the hardcoded URL (`http://kndbots-xyz...`) with your **panel URL**.  
 4. Save the changes and recompile the APK.
 
-#### **Deploying the APK**  
+### **Deploying the APK**  
 1. Install the modified APK on the target device.  
 2. Upon installation, the app (disguised as a calculator) will request various permissions:
    - **Camera**
