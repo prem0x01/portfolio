@@ -117,6 +117,15 @@ function Blogs({ isFullScreenBlog, setIsFullScreenBlog, blogMetadata, blogConten
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleBlogClick(blog.id)}
                 >
+                  {/* Display the thumbnail image if it exists */}
+                  {blog.thumbnail && (
+                    <img
+                      src={blog.thumbnail}
+                      alt={blog.title}
+                      className="w-full h-48 object-cover rounded-lg mb-4"
+                    />
+                  )}
+
                   <h3 className="text-2xl font-semibold mb-3 text-purple-400">{blog.title}</h3>
                   <p className="text-purple-300 mb-3 text-sm">
                     <span className="mr-3">{formatDate(blog.date)}</span>
@@ -139,6 +148,7 @@ function Blogs({ isFullScreenBlog, setIsFullScreenBlog, blogMetadata, blogConten
           </motion.div>
         )}
 
+        {/* Full-screen blog content */}
         {isFullScreenBlog && selectedBlog && (
           <motion.div 
             className="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 overflow-y-auto"

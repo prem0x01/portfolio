@@ -5,7 +5,8 @@
     "date": "2024-09-27",
     "readTime": "5 min read",
     "tags": ["Cybersecurity", "Technology", "AI"],
-    "excerpt": "What is lolbins and what it can do let's find out ..."
+    "excerpt": "What is lolbins and what it can do let's find out ...",
+     "thumbnail":"/images/blog2.jpg"
   },
   {
     "id": "blog2",
@@ -13,6 +14,16 @@
     "date": "2024-02-15",
     "readTime": "7 min read",
     "tags": ["NullByteInjection", "JavaScript", "Web Development"],
-    "excerpt": "What is null byte injection, Let's find out ..."
+    "excerpt": "What is null byte injection, Let's find out ...",
+     "thumbnail":"/images/blog1.jpg"
+  },
+  {
+    "id": "blog3",
+    "title": "Botnet",
+    "date": "2024-11-16",
+    "readTime": "10 min read",
+    "tags": ["Botnet", "Java", "Malware"],
+    "excerpt": "Unveiling Rouge Botnet: The Ultimate Guide to Android Exploitation and Setup",
+     "thumbnail":"/images/blog3.jpg"
   }
 ]
